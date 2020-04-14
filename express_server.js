@@ -6,12 +6,7 @@ const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
 const generateRandomString = function () {
-  let result = '';
-  const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  for ( let i = 0; i < 6; i++ ) {
-     result += characters.charAt(Math.floor(Math.random() * 6));
-  }
-  return result;
+  return Math.random().toString(36).substr(2,6);
 }
 
 app.set("view engine", "ejs");
@@ -65,4 +60,12 @@ app.get("/urls.json", (req, res) => {
 
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
+});
+
+app.post('/urls/:shortURL/delete', (req, res) => {
+
+  const itemToDelete = req.params.shortURL;
+  delete urlDatabase[itemToDelete];
+  res.redirect('/urls');
+
 });
