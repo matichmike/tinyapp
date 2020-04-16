@@ -26,8 +26,16 @@
           <tr>
             <td><%= url %></td>
             <td><%= urls[url] %></td>
-            <td><a href="urls/<%= url %>"><button type="btn btn-outline-primary" class="btn btn-primary">Edit</button></a></td>
-            <td><form method="POST" action="/urls/<%= url%>/delete"><button type="button" class="btn btn-outline-danger">Delete</button></form></td>
+            <td>
+              <a href=<%=`/urls/${url}`%>>
+                <button type="btn btn-outline-primary" class="btn btn-primary">Edit</button>
+              </a>
+            </td>
+            <td>
+              <form method="POST" action=<%=`/urls/${url}/delete`%>>
+                <button class="btn btn-outline-danger">Delete</button>
+              </form>
+            </td>
           </tr>
         <% } %>
       </tbody>
