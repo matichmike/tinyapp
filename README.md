@@ -17,7 +17,7 @@ TinyApp is a full stack web application built by Michael Matich with Node and Ex
 - EJS
 - bcrypt
 - body-parser
-- cookie-session
+- cookie-session 
 
 ## Getting Started
 
