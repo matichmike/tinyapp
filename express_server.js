@@ -5,7 +5,7 @@ const PORT = 8080;
 const bodyParser = require("body-parser");
 const bcrypt = require('bcrypt');
 const cookieSession = require('cookie-session');
-const getUserByEmail = require('./helpers');
+const { getUserByEmail } = require('./helpers');
 
 app.use(cookieSession({
   name: 'session',
@@ -33,14 +33,17 @@ const urlDatabase = {
   i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
 
+// adding a new URL
 const updateUrls = (shortURL, longURL) => {
   urlDatabase[shortURL].longURL = longURL;
 }
 
+// random string generator (6 alphanumeric characters)
 const generateRandomString = function () {
   return Math.random().toString(36).substr(2,6);
 }
 
+// updating the users' object and hashing the password
 const updateUsers = (email, password) => {
   const hashedPassword = bcrypt.hashSync(password, 10);
   const userID = generateRandomString();
@@ -48,6 +51,7 @@ const updateUsers = (email, password) => {
   return userID;
 }
 
+// filtering the URLs list so that it will be visible to the user who created them
 function urlsForUser(id, urlsObj) {
   let userUniqueDb = {};
   for (let item in urlsObj) {
@@ -70,6 +74,7 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+// logout/ clearing the cookie
 app.post('/logout', (req, res) => {
   req.session = null;
   res.redirect('/urls');
@@ -80,6 +85,7 @@ app.get('/register', (req, res) => {
   res.render('register', templateVars);
 });
 
+// registration path/ not allowing to proceed if email/password fields are blank or the given email is already registered
 app.post('/register', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -101,6 +107,7 @@ app.get('/login', (req, res) => {
   res.render('login', templateVars);
 });
 
+// log in path/not allowing to proceed if the account doesnt exist or password is wrong/password comparison using bcrypt hashing method
 app.post('/login', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -115,6 +122,7 @@ app.post('/login', (req, res) => {
   }
 });
 
+// visible list of URLs created by the logged in user
 app.get("/urls", (req, res) => {
   const idPassedFromCookie = req.session.user_id;
   let user = users[idPassedFromCookie];
@@ -131,6 +139,7 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+// removal of an URL by the user that created it
 app.post('/urls/:shortURL/delete', (req, res) => {
   let id = req.session.user_id
   let user = users[id]
@@ -147,6 +156,7 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   res.redirect('/urls');
 });
 
+// adding the new URL to the list by the logged in user/ redirecting to /login path if not logged in
 app.get("/urls/new", (req, res) => {
   let id = req.session.user_id
   let user = users[id]
@@ -162,23 +172,25 @@ app.get("/urls/new", (req, res) => {
   
 });
 
+// view of the one URL by the user that created it, the user should be logged in
 app.get("/urls/:shortURL", (req, res) => {
   let user = users[req.session.user_id];
-
   let filteredDb = urlsForUser(user.id, urlDatabase);
   if (filteredDb[req.params.shortURL]) {
     let templateVars = {'user_id': req.session.user_id, shortURL: req.params.shortURL, longURL: filteredDb[req.params.shortURL], 'user' : user };
     res.render("urls_show", templateVars);
   } else {
-    res.status(403).send('Incorrect password!');
+    res.status(403).send('Unauthorised access');
   }
 });
 
+// directly accessing the shortURL link by anyone results in a redirect to corresponding longURL
 app.get("/u/:shortURL", (req, res) => {
   let longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL.longURL);
 });
 
+// editing the URL by the user that created it, the user should be logged in
 app.post('/urls/:shortURL/edit', (req, res) => {
   let id = req.session.user_id
   let user = users[id]
@@ -196,11 +208,16 @@ app.post('/urls/:shortURL/edit', (req, res) => {
   res.redirect('/urls');
 });
 
+// adding the new URL to the DB by a user
 app.post("/urls", (req, res) => {
-  let shortURL = generateRandomString();
-  let longURL = req.body;
   const idPassedFromCookie = req.session.user_id;
   let user = users[idPassedFromCookie];
+  if (!user) {
+    res.redirect("/login")
+    return;
+  }
+  let shortURL = generateRandomString();
+  let longURL = req.body;
   urlDatabase[shortURL] = { longURL: longURL["longURL"], userID: user.id };
   res.redirect(`/urls/${shortURL}`);
 });
