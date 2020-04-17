@@ -5,6 +5,7 @@ const PORT = 8080;
 const bodyParser = require("body-parser");
 const bcrypt = require('bcrypt');
 const cookieSession = require('cookie-session');
+const getUserByEmail = require('./helpers');
 
 app.use(cookieSession({
   name: 'session',
@@ -47,16 +48,6 @@ const updateUsers = (email, password) => {
   return userID;
 }
 
-const emailLookup = (email) => {
-  let usersValues = Object.values(users);
-  for (let user of usersValues) {
-    if (user.email === email) {
-      return user;
-    }
-  }
-  return false;
-}
-
 function urlsForUser(id, urlsObj) {
   let userUniqueDb = {};
   for (let item in urlsObj) {
@@ -94,7 +85,7 @@ app.post('/register', (req, res) => {
   const password = req.body.password;
   if (!email || !password) {
     res.redirect(400, '/register');
-  } else if (emailLookup(email)){
+  } else if (getUserByEmail(email, users)){
     res.redirect(400, '/register');
   } else {
       const id = updateUsers(email, password);
@@ -113,7 +104,7 @@ app.get('/login', (req, res) => {
 app.post('/login', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const user = emailLookup(email);
+  const user = getUserByEmail(email, users);
   if (!user){
     res.status(403).send('There is no account under the given email!')
   } else if (!bcrypt.compareSync(password, user.password)){
