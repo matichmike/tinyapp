@@ -8,7 +8,7 @@ TinyApp is a full stack web application built by Michael Matich with Node and Ex
 
 !["Editing the URL"](https://github.com/matichmike/tinyapp/blob/master/docs/url_edit-page.png?raw=true)
 
-!["Registration screen"](https://github.com/matichmike/tinyapp/blob/master/docs/registration-page.png?raw=true)
+!["Registration screen page"](https://github.com/matichmike/tinyapp/blob/master/docs/registration-page.png?raw=true)
 
 ## Dependencies
 
