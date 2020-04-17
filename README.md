@@ -13,7 +13,7 @@ TinyApp is a full stack web application built by Michael Matich with Node and Ex
 ## Dependencies
 
 - Node.js
-- Express
+- Express 
 - EJS
 - bcrypt
 - body-parser
