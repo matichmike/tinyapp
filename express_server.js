@@ -5,7 +5,7 @@ const PORT = 8080;
 const bodyParser = require("body-parser");
 const bcrypt = require('bcrypt');
 const cookieSession = require('cookie-session');
-const { getUserByEmail } = require('./helpers');
+const { getUserByEmail, urlsForUser, updateUsers, generateRandomString, updateUrls } = require('./helpers');
 
 app.use(cookieSession({
   name: 'session',
@@ -33,45 +33,16 @@ const urlDatabase = {
   i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
 
-// adding a new URL
-const updateUrls = (shortURL, longURL) => {
-  urlDatabase[shortURL].longURL = longURL;
-}
-
-// random string generator (6 alphanumeric characters)
-const generateRandomString = function () {
-  return Math.random().toString(36).substr(2,6);
-}
-
-// updating the users' object and hashing the password
-const updateUsers = (email, password) => {
-  const hashedPassword = bcrypt.hashSync(password, 10);
-  const userID = generateRandomString();
-  users[userID] = {id: userID, email: email, password: hashedPassword};
-  return userID;
-}
-
-// filtering the URLs list so that it will be visible to the user who created them
-function urlsForUser(id, urlsObj) {
-  let userUniqueDb = {};
-  for (let item in urlsObj) {
-    if (urlsObj[item].userID === id) {
-      userUniqueDb[item] = urlsObj[item];
-    } 
-  }
-  return userUniqueDb;
-}
-
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  if (!req.session.user_id) {
+    res.redirect('/login');
+  } else {
+    res.redirect('/urls');
+  }
 });
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
-});
-
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
 // logout/ clearing the cookie
@@ -94,7 +65,7 @@ app.post('/register', (req, res) => {
   } else if (getUserByEmail(email, users)){
     res.redirect(400, '/register');
   } else {
-      const id = updateUsers(email, password);
+      const id = updateUsers(email, password, users);
       req.session.user_id = id;
       res.redirect('/urls');
   }
@@ -117,7 +88,7 @@ app.post('/login', (req, res) => {
   } else if (!bcrypt.compareSync(password, user.password)){
     res.status(403).send('Incorrect password!')
   } else {
-    req.session.user_id = id;
+    req.session.user_id = user.id;
     res.redirect('/urls');
   }
 });
@@ -175,7 +146,7 @@ app.get("/urls/new", (req, res) => {
 // view of the one URL by the user that created it, the user should be logged in
 app.get("/urls/:shortURL", (req, res) => {
   let user = users[req.session.user_id];
-  let filteredDb = urlsForUser(user.id, urlDatabase);
+  let filteredDb = urlsForUser(req.session.user_id, urlDatabase);
   if (filteredDb[req.params.shortURL]) {
     let templateVars = {'user_id': req.session.user_id, shortURL: req.params.shortURL, longURL: filteredDb[req.params.shortURL], 'user' : user };
     res.render("urls_show", templateVars);
@@ -204,7 +175,7 @@ app.post('/urls/:shortURL/edit', (req, res) => {
   }
   const itemToUpdate = req.params.shortURL; 
   const itemURL = req.body.longURL;  
-  updateUrls(itemToUpdate, itemURL);
+  updateUrls(itemToUpdate, itemURL, urlDatabase);
   res.redirect('/urls');
 });
 
